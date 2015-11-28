@@ -10,6 +10,7 @@ request = require('request').defaults({
 })
 
 DOCOMO_DIALOGUE_API_URL='https://api.apigw.smt.docomo.ne.jp/dialogue/v1/dialogue?APIKEY='
+DOCOMO_DIALOGUE_API_KEY=process.env.DOCOMO_DIALOGUE_API_KEY
 
 module.exports = (robot) ->
   api = "#{DOCOMO_DIALOGUE_API_URL}#{DOCOMO_DIALOGUE_API_KEY}"
