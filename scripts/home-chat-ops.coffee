@@ -2,10 +2,12 @@
 #   おうちハック
 #   iftttやhueなどのエイリアスと、slackの発言受け取っての実行
 # Commands:
-#   hubot ライト ライトをつけます
-#   hubot ライト ライトを消します
-#   hubot エアコン エアコンつけます
-#   hubot エアコン エアコン消します
+#   hubot ライト - ライトをつけます
+#   hubot ライト - ライトを消します
+#   hubot エアコン - エアコンつけます
+#   hubot エアコン - エアコン消します
+#   hubot おやすみ - ライトを消しエアコンを予約状態にします
+#   hubot いってきます - エアコンとライトを消します
 hubotSlack = require 'hubot-slack'
 hubot = require 'hubot'
 
@@ -28,10 +30,18 @@ module.exports = (robot) ->
   robot.hear /(エアコン|aircon).*(消して|けして|オフ|off$)/, (res) ->
     callCommand robot, res.message, "#{res.robot.name} ir send message airconoff for home"
 
-  robot.listeners.push new hubotSlack.SlackBotListener robot, /ただいま！/i, (res) ->
+  robot.hear /おやすみ/, (res) ->
+    callCommand robot, res.message, "#{res.robot.name} ir send message airconreserve for home"
+    callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
+
+  robot.hear /いってきます/, (res) ->
+    callCommand robot, res.message, "#{res.robot.name} ir send message airconoff for home"
+    callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
+
+  robot.listeners.push new hubotSlack.SlackBotListener robot, /おかえり！/i, (res) ->
     callCommand robot, res.message, "#{res.robot.name} ir send message airconon for home"
     callCommand robot, res.message, "#{res.robot.name} ifttt hue_on"
 
-  robot.listeners.push new hubotSlack.SlackBotListener robot, /いってきます！/i, (res) ->
+  robot.listeners.push new hubotSlack.SlackBotListener robot, /いってらっしゃい！/i, (res) ->
     callCommand robot, res.message, "#{res.robot.name} ir send message airconoff for home"
     callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
