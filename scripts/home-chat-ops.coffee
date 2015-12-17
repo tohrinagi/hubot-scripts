@@ -10,6 +10,7 @@
 #   hubot いってきます - エアコンとライトを消します
 hubotSlack = require 'hubot-slack'
 hubot = require 'hubot'
+jsonpClient = require 'jsonp-client';
 
 module.exports = (robot) ->
 
@@ -30,8 +31,18 @@ module.exports = (robot) ->
   robot.hear /(エアコン|aircon).*(消して|けして|オフ|off$)/, (res) ->
     callCommand robot, res.message, "#{res.robot.name} ir send message airconoff for home"
 
-  robot.hear /おやすみ/, (res) ->
+  robot.listeners.push new hubotSlack.SlackBotListener robot, /おやすみ/i, (res) ->
+    robot.brain.set "goodnight", true
     callCommand robot, res.message, "#{res.robot.name} ir send message airconreserve for home"
+    callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
+
+  robot.hear /おやすみ/, (res) ->
+    robot.brain.set "goodnight", true
+    callCommand robot, res.message, "#{res.robot.name} ir send message airconreserve for home"
+    callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
+
+  robot.listeners.push new hubotSlack.SlackBotListener robot, /いってきます/i, (res) ->
+    callCommand robot, res.message, "#{res.robot.name} ir send message airconoff for home"
     callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
 
   robot.hear /いってきます/, (res) ->
