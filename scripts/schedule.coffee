@@ -19,8 +19,14 @@ module.exports = (robot) ->
       if goodnight || !stay
         return
       d = new Date
+      hours = d.getHours()
+      if hours == 0
+        hours = "00"
+      minutes = d.getMinutes()
+      if minutes == 0
+        minutes = "00"
       robot.send {room: "#life"}, random [
-        "@tohrinagi もう #{d.getHours()}:#{d.toLocaleTimeString()} だよ！",
+        "@tohrinagi もう #{hours}:#{minutes} だよ！",
         "@tohrinagi こらっ！寝なさい！",
         "@tohrinagi 夜更かしすると辛いよ！"
       ]
