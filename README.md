@@ -8,3 +8,7 @@ my hubot scripts.
 
 - put your docomo api key in DOCOMO_DIALOGUE_API_KEY
 - npm request module
+
+## github-contributes.coffee
+
+- npm xml2json module
