@@ -30,7 +30,14 @@ module.exports = (robot) ->
         weather = JSON.parse(processingBody)
 
         d = new Date
-        today = weather.pref.area['東京地方'].info.find (item, idx, array ) -> item.date == "#{d.getFullYear()}/#{d.getMonth()+1}/#{d.getDate()}"
+        month = d.getMonth()+1
+        date = d.getDate()
+        if month < 10
+          month = '0' + month
+        if date < 10
+          date = '0' + date
+        dateString = "#{d.getFullYear()}/#{month}/#{date}"
+        today = weather.pref.area['東京地方'].info.find (item, idx, array ) -> item.date == dateString
         today_rainfall = 0
         for val in today.rainfallchance.period
           if parseInt(val.content,10) > today_rainfall
@@ -70,7 +77,7 @@ module.exports = (robot) ->
   robot.listeners.push new hubotSlack.SlackBotListener robot, /いってきます/i, (res) ->
     callCommand robot, res.message, "#{res.robot.name} ir send message airconoff for home"
     callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
-    needsForUmbrella res
+    needsForUmbrella res,false
 
   robot.hear /いってきます/, (res) ->
     callCommand robot, res.message, "#{res.robot.name} ir send message airconoff for home"
@@ -93,4 +100,4 @@ module.exports = (robot) ->
       msg.reply "現在の状況は…\n在宅状況：#{stay}\n睡眠状況：#{goodnight}"
 
   robot.respond /傘いる？/, (msg) ->
-    needsForUmbrella msg,true
+      needsForUmbrella msg,true
