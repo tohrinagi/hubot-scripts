@@ -37,9 +37,9 @@ module.exports = (robot) ->
         if date < 10
           date = '0' + date
         dateString = "#{d.getFullYear()}/#{month}/#{date}"
-        today = weather.pref.area['東京地方'].info.find (item, idx, array ) -> item.date == dateString
+        today = weather.pref.area['東京地方'].info.filter (item, idx, array ) -> item.date == dateString
         today_rainfall = 0
-        for val in today.rainfallchance.period
+        for val in today[0].rainfallchance.period
           if parseInt(val.content,10) > today_rainfall
             today_rainfall = parseInt(val.content,10)
         if today_rainfall > 30
