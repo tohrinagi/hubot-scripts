@@ -8,8 +8,11 @@
 #   hubot エアコン - エアコン消します
 #   hubot おやすみ - ライトを消しエアコンを予約状態にします
 #   hubot いってきます - エアコンとライトを消します
+#   hubot ただいま - エアコンとライトをつけます
 #   hubot 家の状況 - 現在の状況を説明します
 #   hubot 傘いる？ - 雨が降るか聞きます
+#   hubot airconon - エアコンつけます
+#   hubot airconoff - エアコン消します
 hubotSlack = require 'hubot-slack'
 hubot = require 'hubot'
 
@@ -19,6 +22,28 @@ module.exports = (robot) ->
     msg = new hubot.TextMessage msgOrg.user, text, msgOrg.id
     msg.room = msgOrg.room
     robot.receive msg
+
+  getTemprature = (success,error) ->
+    Netatmo = require 'netatmo'
+    auth =
+      client_id: process.env.HUBOT_NETATMO_CLIENT_ID
+      client_secret: process.env.HUBOT_NETATMO_CLIENT_SECRET
+      username: process.env.HUBOT_NETATMO_USERNAME
+      password: process.env.HUBOT_NETATMO_PASSWORD
+    api = new Netatmo auth
+
+    options =
+      device_id: process.env.HUBOT_NETATMO_DEVICE_ID
+      scale: 'max'
+      type: ['Temperature']
+      date_end: "last"
+
+    api.getMeasure options, (err,measure) ->
+      if err
+        error()
+      else
+        temperature = measure[0]['value'][0]
+        success(parseInt(temperature))
 
   needsForUmbrella = (res,reply) ->
     res.http( "http://www.drk7.jp/weather/json/13.js" )
@@ -57,8 +82,18 @@ module.exports = (robot) ->
     callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
 
   robot.hear /(エアコン|aircon).*(つけて|オン|on$)/, (res) ->
-    res.send "エアコンつけるよ"
-    callCommand robot, res.message, "#{res.robot.name} ir send message airconon for home"
+    getTemprature (temperature)->
+      if temperature > 26
+        res.send "#{temperature}度だね。冷房エアコンつけるよ"
+        callCommand robot, res.message, "#{res.robot.name} ir send message aircon_on_cool for home"
+      else if temperature < 19
+        res.send "#{temperature}度だね。暖房エアコンつけるよ"
+        callCommand robot, res.message, "#{res.robot.name} ir send message airconon for home"
+      else
+        res.send "#{temperature}度だね。エアコンの必要ないみたい"
+    ()->
+      res.send "get temperature error"
+
 
   robot.hear /(エアコン|aircon).*(消して|けして|オフ|off$)/, (res) ->
     res.send "エアコン消すよ"
@@ -66,38 +101,43 @@ module.exports = (robot) ->
 
   robot.listeners.push new hubotSlack.SlackBotListener robot, /おやすみ/i, (res) ->
     robot.brain.set "goodnight", true
-    callCommand robot, res.message, "#{res.robot.name} ir send message airconreserve for home"
     callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
 
   robot.hear /おやすみ/, (res) ->
     robot.brain.set "goodnight", true
-    callCommand robot, res.message, "#{res.robot.name} ir send message airconreserve for home"
     callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
 
   robot.listeners.push new hubotSlack.SlackBotListener robot, /いってきます/i, (res) ->
-    callCommand robot, res.message, "#{res.robot.name} ir send message airconoff for home"
+    res.send "いってらっしゃい！"
+    robot.brain.set "stay", false
     callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
-    needsForUmbrella res,false
+    callCommand robot, res.message, "#{res.robot.name} ir send message airconoff for home"
 
   robot.hear /いってきます/, (res) ->
-    callCommand robot, res.message, "#{res.robot.name} ir send message airconoff for home"
+    res.send "いってらっしゃい！"
+    robot.brain.set "stay", false
     callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
     needsForUmbrella res,false
+    callCommand robot, res.message, "#{res.robot.name} ir send message airconoff for home"
 
-  robot.listeners.push new hubotSlack.SlackBotListener robot, /おかえり！/i, (res) ->
+  robot.listeners.push new hubotSlack.SlackBotListener robot, /ただいま/i, (res) ->
+    res.send "おかえりなさい！"
+    robot.brain.set "stay", true
+    callCommand robot, res.message, "#{res.robot.name} ifttt hue_on"
+    callCommand robot, res.message, "#{res.robot.name} airconon"
+
+  robot.hear /ただいま/, (res) ->
+    res.send "おかえりなさい！"
     robot.brain.set "stay", true
     callCommand robot, res.message, "#{res.robot.name} ir send message airconon for home"
     callCommand robot, res.message, "#{res.robot.name} ifttt hue_on"
 
-  robot.listeners.push new hubotSlack.SlackBotListener robot, /いってらっしゃい！/i, (res) ->
-    robot.brain.set "stay", false
-    callCommand robot, res.message, "#{res.robot.name} ir send message airconoff for home"
-    callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
-
   robot.respond /(家の状況)/, (msg) ->
-      stay = if robot.brain.get "stay" then "在宅" else "外出"
-      goodnight = if robot.brain.get "goodnight" then "睡眠中" else "起床中"
-      msg.reply "現在の状況は…\n在宅状況：#{stay}\n睡眠状況：#{goodnight}"
+    stay = if robot.brain.get "stay" then "在宅" else "外出"
+    goodnight = if robot.brain.get "goodnight" then "睡眠中" else "起床中"
+    msg.reply "現在の状況は…\n在宅状況：#{stay}\n睡眠状況：#{goodnight}"
 
   robot.respond /傘いる？/, (msg) ->
-      needsForUmbrella msg,true
+    needsForUmbrella msg,true
+
+
