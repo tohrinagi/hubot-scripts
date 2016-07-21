@@ -112,13 +112,14 @@ module.exports = (robot) ->
     robot.brain.set "stay", false
     callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
     callCommand robot, res.message, "#{res.robot.name} ir send message airconoff for home"
+    needsForUmbrella res,false
 
   robot.hear /いってきます/, (res) ->
     res.send "いってらっしゃい！"
     robot.brain.set "stay", false
     callCommand robot, res.message, "#{res.robot.name} ifttt hue_off"
-    needsForUmbrella res,false
     callCommand robot, res.message, "#{res.robot.name} ir send message airconoff for home"
+    needsForUmbrella res,false
 
   robot.listeners.push new hubotSlack.SlackBotListener robot, /ただいま/i, (res) ->
     res.send "おかえりなさい！"
@@ -129,8 +130,8 @@ module.exports = (robot) ->
   robot.hear /ただいま/, (res) ->
     res.send "おかえりなさい！"
     robot.brain.set "stay", true
-    callCommand robot, res.message, "#{res.robot.name} ir send message airconon for home"
     callCommand robot, res.message, "#{res.robot.name} ifttt hue_on"
+    callCommand robot, res.message, "#{res.robot.name} airconon"
 
   robot.respond /(家の状況)/, (msg) ->
     stay = if robot.brain.get "stay" then "在宅" else "外出"
